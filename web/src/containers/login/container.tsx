@@ -31,7 +31,13 @@ export const LoginContainer = () => {
           label="Email"
           placeholder="Enter your email"
           required
-          {...register("email", { required: "Email Address is required" })}
+          {...register("email", {
+            required: "Email Address is required",
+            pattern: {
+              value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+              message: "Invalid email address",
+            },
+          })}
           errorMessage={errors.email?.message}
         />
 

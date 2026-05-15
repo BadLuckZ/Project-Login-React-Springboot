@@ -1,7 +1,6 @@
 package com.example.server.service
 
 import com.example.server.dto.AuthResponse
-import com.example.server.dto.UserDto
 import com.example.server.model.User
 import com.example.server.repository.UserRepository
 import com.example.server.security.HashEncoder
@@ -28,7 +27,6 @@ class AuthService(
 
         return AuthResponse(
             message = "Registration successful",
-            user = UserDto(email = savedUser.email, username = savedUser.username)
         )
     }
 }

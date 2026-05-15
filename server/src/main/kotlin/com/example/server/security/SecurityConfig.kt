@@ -14,7 +14,8 @@ class SecurityConfig {
     // Disable login form ของ Spring Security
     @Bean
     fun securityFilterChain(http: HttpSecurity): SecurityFilterChain {
-        http.csrf { it.disable() }
+        http.cors {}
+            .csrf { it.disable() }
             .formLogin { it.disable() }
             .httpBasic { it.disable() }
             .authorizeHttpRequests {

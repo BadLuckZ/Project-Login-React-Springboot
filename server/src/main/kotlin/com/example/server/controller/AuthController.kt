@@ -2,6 +2,7 @@ package com.example.server.controller
 
 import com.example.server.dto.AuthResponse
 import com.example.server.service.AuthService
+import jakarta.validation.Valid
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
@@ -10,7 +11,6 @@ import jakarta.validation.constraints.Email
 import jakarta.validation.constraints.Pattern
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
-import org.springframework.validation.annotation.Validated
 
 @RestController
 @RequestMapping("/auth")
@@ -33,7 +33,7 @@ class AuthController(
     )
 
     @PostMapping("/register")
-    fun register(@RequestBody request: RegisterRequest): ResponseEntity<AuthResponse> {
+    fun register(@Valid @RequestBody request: RegisterRequest): ResponseEntity<AuthResponse> {
         return try {
             val response = authService.register(request.email, request.password, request.username)
             ResponseEntity.status(HttpStatus.CREATED).body(response)
