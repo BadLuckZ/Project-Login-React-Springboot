@@ -5,16 +5,18 @@ import com.example.server.dto.AuthLoginResponse
 import com.example.server.dto.AuthRegisterRequest
 import com.example.server.dto.AuthRegisterResponse
 import com.example.server.service.AuthService
+import jakarta.servlet.http.HttpServletResponse
 import jakarta.validation.Valid
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
-import jakarta.validation.constraints.Email
-import jakarta.validation.constraints.Pattern
+import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
+import org.springframework.http.ResponseCookie
 import org.springframework.http.ResponseEntity
 import org.springframework.security.authentication.BadCredentialsException
+import java.time.Duration
 
 @RestController
 @RequestMapping("/auth")
@@ -32,16 +34,27 @@ class AuthController(
         }
     }
 
+    // Access Token ใน React State
+    // Refresh Token ใน HttpOnly Cookie
     @PostMapping("/login")
-    fun login(@Valid @RequestBody request: AuthLoginRequest): ResponseEntity<AuthLoginResponse> {
+    fun login(
+        @Valid @RequestBody request: AuthLoginRequest,
+        response: HttpServletResponse
+    ): ResponseEntity<AuthLoginResponse> {
         return try {
-            val response = authService.login(request.email, request.password)
-            ResponseEntity.ok(response)
+            val (result, refreshToken) = authService.login(request.email, request.password)
+            val cookie = ResponseCookie.from("refreshToken", refreshToken)
+                .httpOnly(true)
+                // DEVELOPMENT MODE
+                .secure(false)
+                .sameSite("Lax")
+                // =========================
+                .maxAge(Duration.ofDays(30))
+                .build()
+            response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString())
+            ResponseEntity.ok(result)
         } catch (e: BadCredentialsException) {
-            ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                .body(AuthLoginResponse(message = e.message ?: "Invalid credentials", null))
+            ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(AuthLoginResponse(message = e.message ?: "Invalid credentials", accessToken = null))
         }
     }
-
-
 }

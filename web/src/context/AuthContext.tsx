@@ -1,40 +1,46 @@
-import { createContext, useContext, useEffect, useState } from "react";
-import api from "../lib/axios";
-
-export interface User {
-  email: string;
-  username: string;
-}
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
+import { initTokenHandlers } from "../lib/axios";
+import { authLogin } from "../service/auth";
 
 interface AuthContextType {
   isAuthenticated: boolean;
-  isLoading: boolean;
-  user: User | null;
+  login: (email: string, password: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
-export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-  const [state, setState] = useState<AuthContextType>({
-    isAuthenticated: false,
-    isLoading: true,
-    user: null,
-  });
+export const AuthProvider = ({ children }: { children: ReactNode }) => {
+  const [accessToken, setAccessToken] = useState<string | null>(null);
+
+  const accessTokenRef = useRef(accessToken);
+  accessTokenRef.current = accessToken;
 
   useEffect(() => {
-    const verify = async () => {
-      try {
-        const { data } = await api.get("/auth/me");
-        setState({ isAuthenticated: true, isLoading: false, user: data });
-      } catch {
-        setState({ isAuthenticated: false, isLoading: false, user: null });
-      }
-    };
-
-    verify();
+    initTokenHandlers(() => accessTokenRef.current);
   }, []);
 
-  return <AuthContext.Provider value={state}>{children}</AuthContext.Provider>;
+  const login = async (email: string, password: string) => {
+    const data = await authLogin(email, password);
+    setAccessToken(data.accessToken || "");
+  };
+
+  return (
+    <AuthContext.Provider
+      value={{
+        isAuthenticated: !!accessToken,
+        login,
+      }}
+    >
+      {children}
+    </AuthContext.Provider>
+  );
 };
 
 export const useAuth = () => {

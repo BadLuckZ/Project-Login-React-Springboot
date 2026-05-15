@@ -2,7 +2,6 @@ package com.example.server.service
 
 import com.example.server.dto.AuthLoginResponse
 import com.example.server.dto.AuthRegisterResponse
-import com.example.server.dto.TokenPair
 import com.example.server.model.RefreshToken
 import com.example.server.model.User
 import com.example.server.repository.RefreshTokenRepository
@@ -39,7 +38,7 @@ class AuthService(
         )
     }
 
-    fun login(email: String, password: String): AuthLoginResponse {
+    fun login(email: String, password: String): Pair<AuthLoginResponse, String> {
         val user = userRepository.findByEmail(email) ?: throw BadCredentialsException("Invalid credentials")
         if (!hashEncoder.matches(password, user.hashedPassword)) {
             throw BadCredentialsException("Invalid credentials")
@@ -50,13 +49,9 @@ class AuthService(
 
         storeRefreshToken(user.id, newRefreshToken)
 
-        return AuthLoginResponse(
-            message = "Login successful",
-            tokens = TokenPair(
-                accessToken = newAccessToken,
-                refreshToken = newRefreshToken,
-            )
-        )
+        return Pair(
+            AuthLoginResponse(message = "Login successful", accessToken = newAccessToken),
+            newRefreshToken)
     }
 
     private fun storeRefreshToken(userId: ObjectId, refreshToken: String) {
@@ -77,5 +72,25 @@ class AuthService(
         val digest = MessageDigest.getInstance("SHA-256")
         val hashBytes = digest.digest(token.encodeToByteArray())
         return Base64.getEncoder().encodeToString(hashBytes)
+    }
+
+    fun refresh(refreshToken: String): Pair<String, String> {
+        if (!jwtService.validateRefreshToken(refreshToken)) {
+            throw IllegalArgumentException("Invalid refresh token")
+        }
+        val userId = jwtService.getUserIdFromToken(refreshToken)
+        val user = userRepository.findById(ObjectId(userId)).orElseThrow {
+            IllegalArgumentException("Invalid refresh token")
+        }
+
+        val hashed = hashToken(refreshToken)
+        refreshTokenRepository.findByUserIdAndHashedToken(user.id, hashed) ?: throw BadCredentialsException("Refresh token not recognized")
+        refreshTokenRepository.deleteByUserIdAndHashedToken(user.id, hashed)
+
+        val newAccessToken = jwtService.generateAccessToken(user.id.toHexString())
+        val newRefreshToken = jwtService.generateRefreshToken(user.id.toHexString())
+
+        storeRefreshToken(user.id, newRefreshToken)
+        return Pair(newAccessToken, newRefreshToken)
     }
 }

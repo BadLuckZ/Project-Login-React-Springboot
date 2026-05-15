@@ -33,10 +33,5 @@ data class AuthLoginRequest(
 
 data class AuthLoginResponse(
     val message: String,
-    val tokens: TokenPair?
-)
-
-data class TokenPair(
-    val accessToken: String,
-    val refreshToken: String
+    val accessToken: String?
 )

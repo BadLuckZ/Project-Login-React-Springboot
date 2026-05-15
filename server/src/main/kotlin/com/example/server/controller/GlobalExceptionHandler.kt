@@ -22,7 +22,7 @@ class GlobalExceptionHandler {
                 AuthRegisterResponse(message = errorMessage)
             )
             "AuthLoginRequest" -> ResponseEntity.badRequest().body(
-                AuthLoginResponse(message = errorMessage, tokens = null)
+                AuthLoginResponse(message = errorMessage, accessToken = null)
             )
             else -> ResponseEntity.badRequest().body(mapOf("message" to errorMessage))
         }
