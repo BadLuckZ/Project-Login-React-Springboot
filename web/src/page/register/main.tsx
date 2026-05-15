@@ -1,5 +1,10 @@
 import { RegisterContainer } from "../../containers";
+import { FormLayout } from "../../layout";
 
 export const RegisterPage = () => {
-  return <RegisterContainer />;
+  return (
+    <FormLayout>
+      <RegisterContainer />
+    </FormLayout>
+  );
 };
