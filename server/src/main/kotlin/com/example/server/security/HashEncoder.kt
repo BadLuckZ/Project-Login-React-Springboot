@@ -11,4 +11,8 @@ class HashEncoder {
         return bcrypt.encode(raw) ?: ""
     }
 
+    fun matches(raw: String, hashedPassword: String): Boolean {
+        return bcrypt.matches(raw, hashedPassword)
+    }
+
 }
