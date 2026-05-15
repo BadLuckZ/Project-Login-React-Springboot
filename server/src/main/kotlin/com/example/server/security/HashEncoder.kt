@@ -7,12 +7,8 @@ import org.springframework.stereotype.Component
 class HashEncoder {
     private val bcrypt = BCryptPasswordEncoder()
 
-    fun encode(raw: String): String? {
-        return bcrypt.encode(raw)
-    }
-
-    fun matches(raw: String, hashed: String): Boolean {
-        return bcrypt.matches(raw, hashed)
+    fun encode(raw: String): String {
+        return bcrypt.encode(raw) ?: ""
     }
 
 }
