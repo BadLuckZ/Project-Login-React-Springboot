@@ -29,11 +29,14 @@ dependencies {
     runtimeOnly("io.jsonwebtoken:jjwt-impl:0.12.5")
     runtimeOnly("io.jsonwebtoken:jjwt-jackson:0.12.5")
 
-    // JAKARTA DEPENDENCIES
+    // JAKARTA DEPENDENCIES (VALIDATION)
     implementation("jakarta.persistence:jakarta.persistence-api")
     implementation("jakarta.validation:jakarta.validation-api")
-
     implementation("org.springframework.boot:spring-boot-starter-validation")
+
+//    RATE LIMITING DEPENDENCIES
+    implementation("com.bucket4j:bucket4j-redis:8.10.1")
+    implementation("org.springframework.boot:spring-boot-starter-data-redis")
 
     implementation("org.springframework.boot:spring-boot-starter-webmvc")
     implementation("org.jetbrains.kotlin:kotlin-reflect")
