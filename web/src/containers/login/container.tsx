@@ -6,6 +6,7 @@ import { type AuthLoginResponse } from "../../service/auth";
 import type { AxiosError } from "axios";
 import { useAlert } from "../../context/AlertContext";
 import { useAuth } from "../../context/AuthContext";
+import { useState } from "react";
 
 type LoginForm = {
   email: string;
@@ -16,8 +17,10 @@ export const LoginContainer = () => {
   const { showAlert } = useAlert();
   const { login } = useAuth();
   const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
 
   const onSubmit = async (data: LoginForm) => {
+    setLoading(true);
     try {
       await login(data.email, data.password);
       navigate(CONTENT_PATH);
@@ -33,6 +36,7 @@ export const LoginContainer = () => {
         description: axiosError.response?.data.message || "Login failed",
       });
     }
+    setLoading(false);
   };
 
   const {
@@ -72,7 +76,7 @@ export const LoginContainer = () => {
           errorMessage={errors.password?.message}
         />
 
-        <Button type="submit" label="Login" />
+        <Button loading={loading} type="submit" label="Login" />
       </form>
       <p className="text-end text-base">
         Don't have an account?{" "}

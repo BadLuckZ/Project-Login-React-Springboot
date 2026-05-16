@@ -14,7 +14,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
     { className, type, label, placeholder, required, errorMessage, ...props },
     ref,
   ) => {
-    const [showPassword, setShowPassword] = React.useState(type === "password");
+    const [showPassword, setShowPassword] = React.useState(false);
     return (
       <div className="flex flex-col">
         {label && (
@@ -27,7 +27,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
           <input
             ref={ref}
             type={
-              type != "password" ? type : showPassword ? "text" : "password"
+              type != "password" ? type : !showPassword ? "password" : "text"
             }
             data-slot="input"
             placeholder={placeholder}

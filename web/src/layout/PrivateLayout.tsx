@@ -3,7 +3,7 @@ import { useAuth } from "../context/AuthContext";
 import { LOGIN_PATH } from "../path";
 
 const PrivateLayout = () => {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isAuthLoading: isLoading } = useAuth();
   const location = useLocation();
 
   if (isLoading) return <div>Loading...</div>;

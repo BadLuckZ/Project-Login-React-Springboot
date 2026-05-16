@@ -5,6 +5,7 @@ import { LOGIN_PATH } from "../../path";
 import { authRegister, type AuthRegisterResponse } from "../../service/auth";
 import { AxiosError } from "axios";
 import { useAlert } from "../../context/AlertContext";
+import { useState } from "react";
 
 type RegisterForm = {
   username: string;
@@ -15,8 +16,10 @@ type RegisterForm = {
 export const RegisterContainer = () => {
   const { showAlert } = useAlert();
   const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
 
   const onSubmit = async (data: RegisterForm) => {
+    setLoading(true);
     try {
       await authRegister(data.email, data.password, data.username);
       navigate(LOGIN_PATH);
@@ -32,6 +35,7 @@ export const RegisterContainer = () => {
         description: axiosError.response?.data.message || "Registration failed",
       });
     }
+    setLoading(false);
   };
 
   const {
@@ -85,7 +89,7 @@ export const RegisterContainer = () => {
           errorMessage={errors.username?.message}
         />
 
-        <Button type="submit" label="Create Account" />
+        <Button type="submit" loading={loading} label="Create Account" />
       </form>
 
       <p className="text-end text-base">

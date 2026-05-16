@@ -1,3 +1,4 @@
+import type { AxiosResponse } from "axios";
 import type { User } from "../context/AuthContext";
 import api from "../lib/axios";
 
@@ -16,6 +17,10 @@ export interface AuthMeResponse {
   user?: User;
 }
 
+export interface AuthLogoutResponse {
+  message: string;
+}
+
 export const authRegister = async (
   email: string,
   password: string,
@@ -30,9 +35,15 @@ export const authLogin = async (
 ): Promise<AuthLoginResponse> => {
   return api
     .post("/auth/login", { email, password })
-    .then((response) => response.data);
+    .then((response: AxiosResponse<AuthLoginResponse>) => response.data);
 };
 
 export const authMe = async (): Promise<AuthMeResponse> => {
-  return api.get("/auth/me").then((response) => response.data);
+  return api
+    .get("/auth/me")
+    .then((response: AxiosResponse<AuthMeResponse>) => response.data);
+};
+
+export const authLogout = async (): Promise<AuthLogoutResponse> => {
+  return api.post("/auth/logout");
 };

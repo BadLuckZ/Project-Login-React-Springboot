@@ -9,10 +9,7 @@ const api = axios.create({
 });
 
 let _getAccessToken: (() => string | null) | null = null;
-
-export const initTokenHandlers = (getter: () => string | null) => {
-  _getAccessToken = getter;
-};
+let _refreshPromise: Promise<string | null> | null = null;
 
 api.interceptors.request.use((config) => {
   const token = _getAccessToken?.();
@@ -22,14 +19,29 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+export const initTokenHandlers = (getter: () => string | null) => {
+  _getAccessToken = getter;
+};
+
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
     if (error.response?.status === 401 && !error.config._retry) {
       error.config._retry = true;
+
+      // ถ้ามี refresh อยู่แล้ว ให้รอ promise เดิม ไม่เรียกซ้ำ
+      if (!_refreshPromise) {
+        _refreshPromise = authMe()
+          .then((data) => data.accessToken ?? null)
+          .finally(() => {
+            _refreshPromise = null;
+          });
+      }
+
       try {
-        const data = await authMe();
-        error.config.headers.Authorization = `Bearer ${data.accessToken}`;
+        const token = await _refreshPromise;
+        if (!token) throw new Error("No token");
+        error.config.headers.Authorization = `Bearer ${token}`;
         return api(error.config);
       } catch {
         window.location.href = LOGIN_PATH;

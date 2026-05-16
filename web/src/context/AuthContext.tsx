@@ -7,7 +7,7 @@ import {
   type ReactNode,
 } from "react";
 import { initTokenHandlers } from "../lib/axios";
-import { authLogin, authMe } from "../service/auth";
+import { authLogin, authLogout, authMe } from "../service/auth";
 
 export interface User {
   email: string;
@@ -67,9 +67,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const logout = () => {
-    setAccessToken(null);
-    setUser(null);
+  const logout = async () => {
+    try {
+      await authLogout();
+      setAccessToken(null);
+      setUser(null);
+    } catch (e) {}
   };
 
   return (
