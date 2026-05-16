@@ -46,3 +46,7 @@ data class AuthMeResponse(
     val accessToken: String?,
     val user: AuthMeUser?
 )
+
+data class AuthLogoutResponse(
+    val message: String
+)

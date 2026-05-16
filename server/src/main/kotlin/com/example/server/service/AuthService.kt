@@ -1,6 +1,7 @@
 package com.example.server.service
 
 import com.example.server.dto.AuthLoginResponse
+import com.example.server.dto.AuthLogoutResponse
 import com.example.server.dto.AuthMeResponse
 import com.example.server.dto.AuthMeUser
 import com.example.server.dto.AuthRegisterResponse
@@ -83,6 +84,15 @@ class AuthService(
                 )),
             newRefreshToken
         )
+    }
+
+    fun logout(refreshToken: String): AuthLogoutResponse {
+        val userId = jwtService.getUserIdFromToken(refreshToken)
+        val hashed = hashToken(refreshToken)
+        refreshTokenRepository.deleteByUserIdAndHashedToken(
+            ObjectId(userId), hashed
+        )
+        return AuthLogoutResponse(message = "Logout successful")
     }
 
     private fun storeRefreshToken(userId: ObjectId, refreshToken: String) {

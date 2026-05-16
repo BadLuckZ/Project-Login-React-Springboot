@@ -2,6 +2,7 @@ package com.example.server.controller
 
 import com.example.server.dto.AuthLoginRequest
 import com.example.server.dto.AuthLoginResponse
+import com.example.server.dto.AuthLogoutResponse
 import com.example.server.dto.AuthMeResponse
 import com.example.server.dto.AuthRegisterRequest
 import com.example.server.dto.AuthRegisterResponse
@@ -51,7 +52,7 @@ class AuthController(
                 .httpOnly(true)
                 .secure(isProd)
                 .sameSite(if (isProd) "Strict" else "Lax")
-                .path("/auth/me")
+                .path("/auth")
                 .maxAge(Duration.ofDays(30))
                 .build()
             response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString())
@@ -77,7 +78,7 @@ class AuthController(
                 .httpOnly(true)
                 .secure(isProd)
                 .sameSite(if (isProd) "Strict" else "Lax")
-                .path("/auth/me")
+                .path("/auth")
                 .maxAge(Duration.ofDays(30))
                 .build()
             response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString())
@@ -86,5 +87,24 @@ class AuthController(
             ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                 .body(AuthMeResponse(message = "Unauthorized", accessToken = null, user=null))
         }
+    }
+
+    @PostMapping("/logout")
+    fun logout(
+        @CookieValue("refreshToken") refreshToken: String?,
+        response: HttpServletResponse
+    ): ResponseEntity<AuthLogoutResponse> {
+        if (refreshToken == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(AuthLogoutResponse(message = "No refresh token"))
+        }
+        var result = authService.logout(refreshToken)
+
+        val cookie = ResponseCookie.from("refreshToken", "")
+            .maxAge(0)
+            .path("/auth")
+            .build()
+        response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString())
+        return ResponseEntity.ok(result)
     }
 }
