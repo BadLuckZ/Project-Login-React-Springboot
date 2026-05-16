@@ -86,6 +86,11 @@ class AuthService(
     }
 
     private fun storeRefreshToken(userId: ObjectId, refreshToken: String) {
+        val activeSessions = refreshTokenRepository.countByUserId(userId)
+//        No more than 20 sessions
+        if (activeSessions >= 20) {
+            refreshTokenRepository.deleteOldestByUserId(userId)
+        }
         val hashedRefreshToken = hashToken(refreshToken)
         val expiryMs = jwtService.refreshTokenValidMs
         val expiresAt = Instant.now().plusMillis(expiryMs)
