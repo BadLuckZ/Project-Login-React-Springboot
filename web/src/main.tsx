@@ -6,11 +6,9 @@ import { AuthProvider } from "./context/AuthContext.tsx";
 import { AlertProvider } from "./context/AlertContext.tsx";
 
 createRoot(document.getElementById("root")!).render(
-  <StrictMode>
-    <AuthProvider>
-      <AlertProvider>
-        <App />
-      </AlertProvider>
-    </AuthProvider>
-  </StrictMode>,
+  <AuthProvider>
+    <AlertProvider>
+      <App />
+    </AlertProvider>
+  </AuthProvider>,
 );

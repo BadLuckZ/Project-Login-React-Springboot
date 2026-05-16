@@ -9,7 +9,12 @@ export interface AuthLoginResponse {
   accessToken?: string;
 }
 
-export const authRegister = (
+export interface AuthMeResponse {
+  message: string;
+  accessToken?: string;
+}
+
+export const authRegister = async (
   email: string,
   password: string,
   username: string,
@@ -17,11 +22,15 @@ export const authRegister = (
   return api.post("/auth/register", { email, password, username });
 };
 
-export const authLogin = (
+export const authLogin = async (
   email: string,
   password: string,
 ): Promise<AuthLoginResponse> => {
   return api
     .post("/auth/login", { email, password })
     .then((response) => response.data);
+};
+
+export const authMe = async (): Promise<AuthMeResponse> => {
+  return api.get("/auth/me").then((response) => response.data);
 };

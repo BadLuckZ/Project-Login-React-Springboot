@@ -7,17 +7,20 @@ import {
   type ReactNode,
 } from "react";
 import { initTokenHandlers } from "../lib/axios";
-import { authLogin } from "../service/auth";
+import { authLogin, authMe } from "../service/auth";
 
 interface AuthContextType {
   isAuthenticated: boolean;
+  isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
+  logout: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [accessToken, setAccessToken] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   const accessTokenRef = useRef(accessToken);
   accessTokenRef.current = accessToken;
@@ -26,16 +29,37 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     initTokenHandlers(() => accessTokenRef.current);
   }, []);
 
+  useEffect(() => {
+    const verify = async () => {
+      try {
+        const data = await authMe();
+        setAccessToken(data.accessToken || "");
+      } catch (e) {
+        setAccessToken(null);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    verify();
+  }, []);
+
   const login = async (email: string, password: string) => {
-    const data = await authLogin(email, password);
-    setAccessToken(data.accessToken || "");
+    const { accessToken } = await authLogin(email, password);
+    setAccessToken(accessToken || "");
+  };
+
+  const logout = () => {
+    setAccessToken(null);
   };
 
   return (
     <AuthContext.Provider
       value={{
         isAuthenticated: !!accessToken,
+        isLoading,
         login,
+        logout,
       }}
     >
       {children}

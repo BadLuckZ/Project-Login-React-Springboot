@@ -54,6 +54,30 @@ class AuthService(
             newRefreshToken)
     }
 
+    fun me(refreshToken: String): Pair<AuthLoginResponse, String> {
+        if (!jwtService.validateRefreshToken(refreshToken)) {
+            throw IllegalArgumentException("Invalid refresh token")
+        }
+        val userId = jwtService.getUserIdFromToken(refreshToken)
+        val user = userRepository.findById(ObjectId(userId)).orElseThrow {
+            IllegalArgumentException("User not found")
+        }
+
+        val hashed = hashToken(refreshToken)
+        refreshTokenRepository.findByUserIdAndHashedToken(user.id, hashed)
+            ?: throw BadCredentialsException("Refresh token not recognized")
+        refreshTokenRepository.deleteByUserIdAndHashedToken(user.id, hashed)
+
+        val newAccessToken = jwtService.generateAccessToken(user.id.toHexString())
+        val newRefreshToken = jwtService.generateRefreshToken(user.id.toHexString())
+        storeRefreshToken(user.id, newRefreshToken)
+
+        return Pair(
+            AuthLoginResponse(message = "User found", accessToken = newAccessToken),
+            newRefreshToken
+        )
+    }
+
     private fun storeRefreshToken(userId: ObjectId, refreshToken: String) {
         val hashedRefreshToken = hashToken(refreshToken)
         val expiryMs = jwtService.refreshTokenValidMs

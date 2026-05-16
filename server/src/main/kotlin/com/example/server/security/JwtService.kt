@@ -54,16 +54,16 @@ class JwtService(
         }
     }
 
-    fun validateAccessToken(token: String): Boolean {
-        val claims = parseAllClaims(token) ?: return false
-        val tokenType = claims["type"] as? TOKEN ?: return false
-        return tokenType == TOKEN.ACCESS
-    }
-
     fun validateRefreshToken(token: String): Boolean {
         val claims = parseAllClaims(token) ?: return false
-        val tokenType = claims["type"] as? TOKEN ?: return false
-        return tokenType == TOKEN.REFRESH
+        val tokenType = claims["type"] as? String ?: return false
+        return tokenType == TOKEN.REFRESH.name
+    }
+
+    fun validateAccessToken(token: String): Boolean {
+        val claims = parseAllClaims(token) ?: return false
+        val tokenType = claims["type"] as? String ?: return false
+        return tokenType == TOKEN.ACCESS.name
     }
 
     fun getUserIdFromToken(token: String): String {

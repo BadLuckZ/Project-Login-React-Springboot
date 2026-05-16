@@ -16,6 +16,8 @@ import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseCookie
 import org.springframework.http.ResponseEntity
 import org.springframework.security.authentication.BadCredentialsException
+import org.springframework.web.bind.annotation.CookieValue
+import org.springframework.web.bind.annotation.GetMapping
 import java.time.Duration
 
 @RestController
@@ -43,18 +45,45 @@ class AuthController(
     ): ResponseEntity<AuthLoginResponse> {
         return try {
             val (result, refreshToken) = authService.login(request.email, request.password)
+            val isProd = System.getenv("SPRING_PROFILES_ACTIVE") == "prod"
             val cookie = ResponseCookie.from("refreshToken", refreshToken)
                 .httpOnly(true)
-                // DEVELOPMENT MODE
-                .secure(false)
-                .sameSite("Lax")
-                // =========================
+                .secure(isProd)
+                .sameSite(if (isProd) "Strict" else "Lax")
+                .path("/auth/me")
                 .maxAge(Duration.ofDays(30))
                 .build()
             response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString())
             ResponseEntity.ok(result)
         } catch (e: BadCredentialsException) {
             ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(AuthLoginResponse(message = e.message ?: "Invalid credentials", accessToken = null))
+        }
+    }
+
+    @GetMapping("/me")
+    fun me(
+        @CookieValue("refreshToken") refreshToken: String?,
+        response: HttpServletResponse
+    ): ResponseEntity<AuthLoginResponse> {
+        if (refreshToken == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(AuthLoginResponse(message = "No refresh token", accessToken = null))
+        }
+        return try {
+            val (result, newRefreshToken) = authService.me(refreshToken)
+            val isProd = System.getenv("SPRING_PROFILES_ACTIVE") == "prod"
+            val cookie = ResponseCookie.from("refreshToken", newRefreshToken)
+                .httpOnly(true)
+                .secure(isProd)
+                .sameSite(if (isProd) "Strict" else "Lax")
+                .path("/auth/me")
+                .maxAge(Duration.ofDays(30))
+                .build()
+            response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString())
+            ResponseEntity.ok(result)
+        } catch (e: Exception) {
+            ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(AuthLoginResponse(message = "Unauthorized", accessToken = null))
         }
     }
 }
