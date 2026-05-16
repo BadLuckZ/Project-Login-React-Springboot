@@ -104,24 +104,4 @@ class AuthService(
         val hashBytes = digest.digest(token.encodeToByteArray())
         return Base64.getEncoder().encodeToString(hashBytes)
     }
-
-    fun refresh(refreshToken: String): Pair<String, String> {
-        if (!jwtService.validateRefreshToken(refreshToken)) {
-            throw IllegalArgumentException("Invalid refresh token")
-        }
-        val userId = jwtService.getUserIdFromToken(refreshToken)
-        val user = userRepository.findById(ObjectId(userId)).orElseThrow {
-            IllegalArgumentException("Invalid refresh token")
-        }
-
-        val hashed = hashToken(refreshToken)
-        refreshTokenRepository.findByUserIdAndHashedToken(user.id, hashed) ?: throw BadCredentialsException("Refresh token not recognized")
-        refreshTokenRepository.deleteByUserIdAndHashedToken(user.id, hashed)
-
-        val newAccessToken = jwtService.generateAccessToken(user.id.toHexString())
-        val newRefreshToken = jwtService.generateRefreshToken(user.id.toHexString())
-
-        storeRefreshToken(user.id, newRefreshToken)
-        return Pair(newAccessToken, newRefreshToken)
-    }
 }
