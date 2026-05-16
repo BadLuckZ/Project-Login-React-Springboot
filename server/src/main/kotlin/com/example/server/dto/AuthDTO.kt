@@ -35,3 +35,14 @@ data class AuthLoginResponse(
     val message: String,
     val accessToken: String?
 )
+
+data class AuthMeUser(
+    val email: String,
+    val username: String,
+)
+
+data class AuthMeResponse(
+    val message: String,
+    val accessToken: String?,
+    val user: AuthMeUser?
+)

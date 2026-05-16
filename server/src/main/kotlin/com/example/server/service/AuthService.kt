@@ -1,6 +1,8 @@
 package com.example.server.service
 
 import com.example.server.dto.AuthLoginResponse
+import com.example.server.dto.AuthMeResponse
+import com.example.server.dto.AuthMeUser
 import com.example.server.dto.AuthRegisterResponse
 import com.example.server.model.RefreshToken
 import com.example.server.model.User
@@ -54,7 +56,7 @@ class AuthService(
             newRefreshToken)
     }
 
-    fun me(refreshToken: String): Pair<AuthLoginResponse, String> {
+    fun me(refreshToken: String): Pair<AuthMeResponse, String> {
         if (!jwtService.validateRefreshToken(refreshToken)) {
             throw IllegalArgumentException("Invalid refresh token")
         }
@@ -73,7 +75,12 @@ class AuthService(
         storeRefreshToken(user.id, newRefreshToken)
 
         return Pair(
-            AuthLoginResponse(message = "User found", accessToken = newAccessToken),
+            AuthMeResponse(message = "User found",
+                accessToken = newAccessToken,
+                user= AuthMeUser(
+                    email = user.email,
+                    username = user.username
+                )),
             newRefreshToken
         )
     }

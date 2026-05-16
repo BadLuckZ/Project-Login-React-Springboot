@@ -3,6 +3,7 @@ import { LOGIN_PATH, CONTENT_PATH, REGISTER_PATH } from "./path";
 import { LoginPage, ContentPage, RegisterPage } from "./page";
 import PrivateLayout from "./layout/PrivateLayout";
 import { AlertContainer } from "./context/AlertContext";
+import { ContentLayout } from "./layout/ContentLayout";
 
 function App() {
   return (
@@ -13,7 +14,14 @@ function App() {
         <Route path={LOGIN_PATH} element={<LoginPage />} />
 
         <Route element={<PrivateLayout />}>
-          <Route path={CONTENT_PATH} element={<ContentPage />} />
+          <Route
+            path={CONTENT_PATH}
+            element={
+              <ContentLayout>
+                <ContentPage />
+              </ContentLayout>
+            }
+          />
         </Route>
 
         <Route path="*" element={<Navigate to={CONTENT_PATH} replace />} />

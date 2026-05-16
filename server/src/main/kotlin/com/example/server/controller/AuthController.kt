@@ -2,6 +2,7 @@ package com.example.server.controller
 
 import com.example.server.dto.AuthLoginRequest
 import com.example.server.dto.AuthLoginResponse
+import com.example.server.dto.AuthMeResponse
 import com.example.server.dto.AuthRegisterRequest
 import com.example.server.dto.AuthRegisterResponse
 import com.example.server.service.AuthService
@@ -64,10 +65,10 @@ class AuthController(
     fun me(
         @CookieValue("refreshToken") refreshToken: String?,
         response: HttpServletResponse
-    ): ResponseEntity<AuthLoginResponse> {
+    ): ResponseEntity<AuthMeResponse> {
         if (refreshToken == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                .body(AuthLoginResponse(message = "No refresh token", accessToken = null))
+                .body(AuthMeResponse(message = "No refresh token", accessToken = null, user = null))
         }
         return try {
             val (result, newRefreshToken) = authService.me(refreshToken)
@@ -83,7 +84,7 @@ class AuthController(
             ResponseEntity.ok(result)
         } catch (e: Exception) {
             ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                .body(AuthLoginResponse(message = "Unauthorized", accessToken = null))
+                .body(AuthMeResponse(message = "Unauthorized", accessToken = null, user=null))
         }
     }
 }

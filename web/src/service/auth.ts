@@ -1,3 +1,4 @@
+import type { User } from "../context/AuthContext";
 import api from "../lib/axios";
 
 export interface AuthRegisterResponse {
@@ -12,6 +13,7 @@ export interface AuthLoginResponse {
 export interface AuthMeResponse {
   message: string;
   accessToken?: string;
+  user?: User;
 }
 
 export const authRegister = async (
