@@ -12,6 +12,7 @@ A fullstack web application with JWT-based authentication, built with a Spring B
 - Spring Security + BCrypt
 - JWT (Access Token + Refresh Token)
 - MongoDB (via Spring Data MongoDB)
+- Redis (via Bucket4j for rate limiting)
 - Gradle (Kotlin DSL)
 
 **Frontend (`/web`)**
@@ -32,6 +33,19 @@ Authentication follows a dual-token pattern:
 - **Access Token** — short-lived (15 min), stored in React state (in-memory), attached to requests via `Authorization: Bearer` header.
 - **Refresh Token** — long-lived (30 days), stored as an `HttpOnly` cookie, used to silently renew the access token via `GET /auth/me`.
 - Refresh tokens are hashed (SHA-256) before being stored in MongoDB and are rotated on every use.
+- A maximum of **20 active sessions** per user are allowed; the oldest session is evicted when the limit is exceeded.
+- MongoDB TTL index on `RefreshToken.expiresAt` automatically removes expired tokens.
+
+---
+
+## Security Features
+
+- **Rate Limiting** — Auth endpoints (`/auth/*`) are protected by an in-memory token-bucket rate limiter (Bucket4j). Each IP address is limited to **20 requests per minute**. Requests exceeding this limit receive a `429 Too Many Requests` response.
+- **Password Hashing** — Passwords are hashed with BCrypt before storage.
+- **Token Hashing** — Refresh tokens are hashed with SHA-256 before storage in MongoDB, so a database leak does not expose raw tokens.
+- **Token Rotation** — Every call to `GET /auth/me` invalidates the old refresh token and issues a new one.
+- **HttpOnly Cookies** — Refresh tokens are stored in `HttpOnly` cookies, inaccessible to JavaScript.
+- **Silent Token Refresh** — The Axios client automatically retries failed requests (401) by refreshing the access token via `/auth/me` before replaying the original request.
 
 ---
 
@@ -42,6 +56,7 @@ Authentication follows a dual-token pattern:
 - Java 17+
 - Node.js 20+
 - MongoDB instance
+- Redis instance (required for Bucket4j rate limiting)
 
 ---
 
@@ -108,11 +123,14 @@ The app runs on `http://localhost:5173` by default.
 
 ## API Endpoints
 
-| Method | Path             | Description                                    |
-| ------ | ---------------- | ---------------------------------------------- |
-| `POST` | `/auth/register` | Register a new user                            |
-| `POST` | `/auth/login`    | Login and receive access + refresh tokens      |
-| `GET`  | `/auth/me`       | Refresh access token using the HttpOnly cookie |
+| Method | Path             | Description                                           |
+| ------ | ---------------- | ----------------------------------------------------- |
+| `POST` | `/auth/register` | Register a new user                                   |
+| `POST` | `/auth/login`    | Login and receive access + refresh tokens             |
+| `GET`  | `/auth/me`       | Refresh access token using the HttpOnly cookie        |
+| `POST` | `/auth/logout`   | Invalidate the current refresh token and clear cookie |
+
+All `/auth/*` endpoints are subject to rate limiting (20 requests/minute per IP).
 
 ---
 
@@ -131,6 +149,19 @@ The app runs on `http://localhost:5173` by default.
 
 ---
 
+## Frontend Routing
+
+| Path        | Access  | Description             |
+| ----------- | ------- | ----------------------- |
+| `/login`    | Public  | Login page              |
+| `/register` | Public  | Registration page       |
+| `/content`  | Private | Protected content page  |
+| `*`         | —       | Redirects to `/content` |
+
+Unauthenticated users attempting to access private routes are redirected to `/login`. On app load, `GET /auth/me` is called to silently restore the session from the refresh token cookie.
+
+---
+
 ## Environment Variables
 
 | Variable                 | Location | Description                                 |
@@ -144,6 +175,6 @@ The app runs on `http://localhost:5173` by default.
 
 ## Production Notes
 
-- Set `SPRING_PROFILES_ACTIVE=prod` on the server to enable `Secure` and `SameSite=Strict` flags on the refresh token cookie.
+- Set `SPRING_PROFILES_ACTIVE=prod` on the server to enable `Secure` and `SameSite=Strict` flags on the refresh token cookie. In development the cookie uses `SameSite=Lax` without the `Secure` flag.
 - CORS is configured to allow `http://localhost:5173` by default — update `SecurityConfig.kt` for your production domain.
-- MongoDB TTL index on `RefreshToken.expiresAt` automatically removes expired tokens.
+- The in-memory rate limiter resets on server restart. For distributed deployments, consider replacing the `ConcurrentHashMap`-backed buckets in `RateLimitFilter.kt` with the Redis-backed Bucket4j integration.
